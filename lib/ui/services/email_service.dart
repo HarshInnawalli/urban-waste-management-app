@@ -1,16 +1,25 @@
-import 'package:url_launcher/url_launcher.dart';
+import 'dart:io';
+import 'package:flutter/services.dart';
 
 class EmailService {
-  Future<void> openEmail(String subject, String body) async {
-    final Uri emailLaunchUri = Uri(
-      scheme: 'mailto',
-      path: '', // leave empty for user to enter recipient
-      query: 'subject=${Uri.encodeComponent(subject)}&body=${Uri.encodeComponent(body)}',
-    );
+  static const MethodChannel _channel =
+      MethodChannel('com.harsh.garbage/email');
 
-    if (!await launchUrl(emailLaunchUri)) {
-      throw 'Could not launch email client';
+  static Future<void> sendComplaintEmail({
+    required String to,
+    required String subject,
+    required String body,
+    required File imageFile,
+  }) async {
+    try {
+      await _channel.invokeMethod('sendEmail', {
+        'to': to,
+        'subject': subject,
+        'body': body,
+        'imagePath': imageFile.path,
+      });
+    } catch (e) {
+      throw Exception("Failed to open Gmail: $e");
     }
   }
 }
-

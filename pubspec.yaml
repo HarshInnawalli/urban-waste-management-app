@@ -36,8 +36,10 @@ dependencies:
   flutter_image_compress: ^2.3.0
   path_provider: ^2.1.2
   image: ^4.0.17
-  geolocator: ^10.3.0
+  geolocator: 14.0.2
   geocoding: ^2.0.5
+  vector_math: ^2.1.4
+  share_plus: ^7.2.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -47,6 +49,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -60,11 +64,36 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-
+ assets:
+    - assets/data/A.geojson
+    - assets/data/B.geojson
+    - assets/data/C.geojson
+    - assets/data/D.geojson
+    - assets/data/E.geojson
+    - assets/data/FN.geojson
+    - assets/data/FS.geojson
+    - assets/data/GN.geojson
+    - assets/data/GS.geojson
+    - assets/data/HE.geojson
+    - assets/data/HW.geojson
+    - assets/data/KE.geojson
+    - assets/data/KW.geojson
+    - assets/data/L.geojson
+    - assets/data/ME.geojson
+    - assets/data/MW.geojson
+    - assets/data/N.geojson
+    - assets/data/PN.geojson
+    - assets/data/PS.geojson
+    - assets/data/RC.geojson
+    - assets/data/RN.geojson
+    - assets/data/RS.geojson
+    - assets/data/S.geojson
+    - assets/data/T.geojson
+  
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
-  uses-material-design: true
+ uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
   # assets:
