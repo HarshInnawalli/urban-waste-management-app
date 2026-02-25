@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 class EmailService {
   static const MethodChannel _channel =
-      MethodChannel('com.harsh.garbage/email');
+      MethodChannel('com.example.gmail_gemini_component/email');
 
   static Future<void> sendComplaintEmail({
     required String to,

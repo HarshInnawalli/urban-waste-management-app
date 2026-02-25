@@ -46,6 +46,36 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
     "T": "wardT@mcgm.gov.in",
   };
 
+  // ✅ PROPER LOCATION PERMISSION HANDLER
+  Future<Position> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      throw Exception('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+
+      if (permission == LocationPermission.denied) {
+        throw Exception('Location permission denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      throw Exception(
+          'Location permission permanently denied. Enable it in settings.');
+    }
+
+    return await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+  }
+
   Future<void> _captureImage() async {
     final image = await CameraService().capturePhoto();
     if (image != null) {
@@ -64,12 +94,10 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // 1️⃣ Get location
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
+      // ✅ Get location safely
+      final position = await _determinePosition();
 
-      // 2️⃣ Get ward from location
+      // Get ward
       final wardName =
           await WardService().getWardFromLocation(position);
 
@@ -77,18 +105,18 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
         throw Exception("Ward not found for this location");
       }
 
-      // 3️⃣ Get ward officer email
       final officerEmail = emailMap[wardName];
       if (officerEmail == null || officerEmail.isEmpty) {
         throw Exception("No email mapped for $wardName");
       }
 
-      // 4️⃣ Generate email body
       String emailContent;
 
       if (useGemini) {
-        emailContent =
-            await GeminiService.generateEmailFromImage(_selectedImage!);
+        emailContent = await GeminiService.generateEmailFromImage(
+          _selectedImage!,
+          position: position,
+        );
       } else {
         emailContent = await GeminiService.generateTemplateEmail(
           wardName: wardName,
@@ -97,7 +125,6 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
         );
       }
 
-      // 5️⃣ Open Gmail draft with IMAGE ATTACHED
       await EmailService.sendComplaintEmail(
         to: officerEmail,
         subject: "Garbage Complaint - Ward $wardName",
@@ -130,16 +157,12 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
             _selectedImage != null
                 ? Image.file(_selectedImage!, height: 200)
                 : const Text("No image selected"),
-
             const SizedBox(height: 20),
-
             ElevatedButton(
               onPressed: _captureImage,
               child: const Text("Capture Image"),
             ),
-
             const SizedBox(height: 20),
-
             _isLoading
                 ? const CircularProgressIndicator()
                 : Column(
