@@ -6,6 +6,8 @@ import 'services/ward_service.dart';
 import 'services/email_service.dart';
 import 'services/gemini_service.dart';
 import 'services/camera_service.dart';
+import 'services/auth_service.dart';
+import 'login_page.dart';
 
 class ComplaintScreen extends StatefulWidget {
   const ComplaintScreen({Key? key}) : super(key: key);
@@ -17,6 +19,8 @@ class ComplaintScreen extends StatefulWidget {
 class _ComplaintScreenState extends State<ComplaintScreen> {
   File? _selectedImage;
   bool _isLoading = false;
+
+  final AuthService _authService = AuthService();
 
   // 🏢 Ward → Email mapping
   final Map<String, String> emailMap = {
@@ -46,7 +50,7 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
     "T": "wardT@mcgm.gov.in",
   };
 
-  // ✅ PROPER LOCATION PERMISSION HANDLER
+  // ✅ Location Permission Handler
   Future<Position> _determinePosition() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -94,10 +98,8 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // ✅ Get location safely
       final position = await _determinePosition();
 
-      // Get ward
       final wardName =
           await WardService().getWardFromLocation(position);
 
@@ -116,6 +118,8 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
         emailContent = await GeminiService.generateEmailFromImage(
           _selectedImage!,
           position: position,
+          prompt:
+              "Write a polite garbage complaint email for Ward $wardName.",
         );
       } else {
         emailContent = await GeminiService.generateTemplateEmail(
@@ -144,11 +148,28 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
     setState(() => _isLoading = false);
   }
 
+  Future<void> _logout() async {
+    await _authService.logout();
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("File Garbage Complaint"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: "Logout",
+            onPressed: _logout,
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -168,13 +189,17 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                 : Column(
                     children: [
                       ElevatedButton(
-                        onPressed: () => _submitComplaint(useGemini: false),
-                        child: const Text("Submit Complaint (Template)"),
+                        onPressed: () =>
+                            _submitComplaint(useGemini: false),
+                        child: const Text(
+                            "Submit Complaint (Template)"),
                       ),
                       const SizedBox(height: 10),
                       ElevatedButton(
-                        onPressed: () => _submitComplaint(useGemini: true),
-                        child: const Text("Submit Complaint (Gemini AI)"),
+                        onPressed: () =>
+                            _submitComplaint(useGemini: true),
+                        child: const Text(
+                            "Submit Complaint (Gemini AI)"),
                       ),
                     ],
                   ),

@@ -6,7 +6,7 @@ import 'package:geolocator/geolocator.dart';
 
 class GeminiService {
   static const workerUrl =
-      "https://complaint-worker.innawalliharsh.workers.dev";
+      "https://complaint-worker.innawalliharsh.workers.dev/generate-complaint";
   static const int maxPayloadBytes = 20000;
 
   static Future<File> compressImage(File imageFile) async {

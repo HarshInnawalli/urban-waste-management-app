@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "504800055115",
-    "project_id": "complaint-section",
-    "storage_bucket": "complaint-section.firebasestorage.app"
+    "project_number": "597188082312",
+    "project_id": "urban-waste-management-app",
+    "storage_bucket": "urban-waste-management-app.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:504800055115:android:6493c2ed9fc670ac9f62ce",
+        "mobilesdk_app_id": "1:597188082312:android:f557aae436e537e5e67d3d",
         "android_client_info": {
           "package_name": "com.example.gmail_gemini_component"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCotA7JH20vXFdauedjqeXI3n6e4Dd3OE0"
+          "current_key": "AIzaSyCT_VTMKPrgT2c8Ewcs1BpaylzCKrVqs2s"
         }
       ],
       "services": {
