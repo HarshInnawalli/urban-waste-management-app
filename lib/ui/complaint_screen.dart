@@ -7,7 +7,7 @@ import 'services/email_service.dart';
 import 'services/gemini_service.dart';
 import 'services/camera_service.dart';
 import 'services/auth_service.dart';
-import 'login_page.dart';
+import 'pages/login_page.dart';
 
 class ComplaintScreen extends StatefulWidget {
   const ComplaintScreen({Key? key}) : super(key: key);
@@ -22,7 +22,6 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
 
   final AuthService _authService = AuthService();
 
-  // 🏢 Ward → Email mapping
   final Map<String, String> emailMap = {
     "A": "wardA@mcgm.gov.in",
     "B": "wardB@mcgm.gov.in",
@@ -50,7 +49,6 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
     "T": "wardT@mcgm.gov.in",
   };
 
-  // ✅ Location Permission Handler
   Future<Position> _determinePosition() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -100,8 +98,7 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
     try {
       final position = await _determinePosition();
 
-      final wardName =
-          await WardService().getWardFromLocation(position);
+      final wardName = await WardService().getWardFromLocation(position);
 
       if (wardName == null) {
         throw Exception("Ward not found for this location");
@@ -118,8 +115,7 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
         emailContent = await GeminiService.generateEmailFromImage(
           _selectedImage!,
           position: position,
-          prompt:
-              "Write a polite garbage complaint email for Ward $wardName.",
+          prompt: "Write a polite garbage complaint email for Ward $wardName.",
         );
       } else {
         emailContent = await GeminiService.generateTemplateEmail(
@@ -158,6 +154,81 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
     );
   }
 
+  Widget _imagePreview() {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      child: _selectedImage != null
+          ? Container(
+              key: const ValueKey("image"),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [
+                  BoxShadow(
+                    blurRadius: 6,
+                    color: Colors.black12,
+                  )
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.file(
+                  _selectedImage!,
+                  height: 220,
+                ),
+              ),
+            )
+          : const Text(
+              "No image selected",
+              key: ValueKey("text"),
+              style: TextStyle(fontSize: 16),
+            ),
+    );
+  }
+
+  Widget _loadingState() {
+    return Column(
+      children: const [
+        SizedBox(
+          height: 40,
+          width: 40,
+          child: CircularProgressIndicator(strokeWidth: 4),
+        ),
+        SizedBox(height: 12),
+        Text("Generating complaint...")
+      ],
+    );
+  }
+
+  Widget _buttons() {
+    return Column(
+      children: [
+        SizedBox(
+          width: 260,
+          child: ElevatedButton(
+            onPressed: _captureImage,
+            child: const Text("Capture Image"),
+          ),
+        ),
+        const SizedBox(height: 18),
+        SizedBox(
+          width: 260,
+          child: ElevatedButton(
+            onPressed: () => _submitComplaint(useGemini: false),
+            child: const Text("Submit Complaint (Template)"),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: 260,
+          child: ElevatedButton(
+            onPressed: () => _submitComplaint(useGemini: true),
+            child: const Text("Submit Complaint (Gemini AI)"),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -171,39 +242,23 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _selectedImage != null
-                ? Image.file(_selectedImage!, height: 200)
-                : const Text("No image selected"),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _captureImage,
-              child: const Text("Capture Image"),
+      body: Center(
+        child: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 350),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _imagePreview(),
+                const SizedBox(height: 30),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  child: _isLoading ? _loadingState() : _buttons(),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            _isLoading
-                ? const CircularProgressIndicator()
-                : Column(
-                    children: [
-                      ElevatedButton(
-                        onPressed: () =>
-                            _submitComplaint(useGemini: false),
-                        child: const Text(
-                            "Submit Complaint (Template)"),
-                      ),
-                      const SizedBox(height: 10),
-                      ElevatedButton(
-                        onPressed: () =>
-                            _submitComplaint(useGemini: true),
-                        child: const Text(
-                            "Submit Complaint (Gemini AI)"),
-                      ),
-                    ],
-                  ),
-          ],
+          ),
         ),
       ),
     );

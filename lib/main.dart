@@ -1,36 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:gmail_gemini_component/ui/complaint_screen.dart';
-import 'package:gmail_gemini_component/ui/login_page.dart';
-import 'package:gmail_gemini_component/ui/services/auth_service.dart';
+
+import 'ui/pages/login_page.dart';
+import 'ui/pages/home_page.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const WasteApp());
 }
 
-class MyApp extends StatelessWidget {
-  final AuthService _authService = AuthService();
+class WasteApp extends StatelessWidget {
+  const WasteApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+
     return MaterialApp(
-      title: 'Complaint App',
+      title: 'Waste Management App',
       debugShowCheckedModeBanner: false,
-      home: FutureBuilder<int?>(
-        future: _authService.getUserId(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
 
-          if (snapshot.data == null) {
-            return const LoginPage();
-          }
-
-          return const ComplaintScreen();
-        },
+      theme: ThemeData(
+        primarySwatch: Colors.green,
       ),
+
+      // App starts at login page
+      home: const LoginPage(),
+
+      // Named routes for navigation
+      routes: {
+        '/home': (context) => const HomePage(),
+      },
+
     );
   }
 }

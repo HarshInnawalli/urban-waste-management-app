@@ -42,6 +42,8 @@ dependencies:
   share_plus: ^7.2.1
   google_sign_in: ^6.2.1
   shared_preferences: ^2.2.2
+  fl_chart: ^0.68.0
+  google_maps_flutter: ^2.6.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -91,6 +93,15 @@ flutter:
     - assets/data/RS.geojson
     - assets/data/S.geojson
     - assets/data/T.geojson
+    - assets/bins/blue_bin.png
+    - assets/bins/yellow_bin.png
+    - assets/bins/green_bin.png
+    - assets/bins/red_bin.png
+    - assets/recycling/paper.png
+    - assets/recycling/ewaste.png
+    - assets/recycling/reduce.png
+    - assets/recycling/plastic.png
+    - assets/recycling/compost.png
   
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
