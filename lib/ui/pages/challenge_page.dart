@@ -9,11 +9,27 @@ class ChallengePage extends StatefulWidget {
 }
 
 class _ChallengePageState extends State<ChallengePage> {
-
   final ChallengeService challengeService = ChallengeService();
 
-  String challengeText = "Press Generate to get a challenge.";
+  String challengeText = "Press Generate to get a recycle challenge.";
   bool loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    loadSavedChallenge();
+  }
+
+  Future<void> loadSavedChallenge() async {
+    final savedChallenge = await challengeService.getSavedChallenge();
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      challengeText = savedChallenge;
+    });
+  }
 
   Future<void> generateChallenge() async {
 
@@ -73,10 +89,10 @@ class _ChallengePageState extends State<ChallengePage> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF2FAF0),
 
       appBar: AppBar(
-        title: const Text("Waste Challenge"),
+        title: const Text("Recycle Challenge"),
         backgroundColor: Colors.green,
       ),
 
@@ -89,7 +105,7 @@ class _ChallengePageState extends State<ChallengePage> {
           children: [
 
             const Text(
-              "Waste Reduction Challenge",
+              "Dominant Waste Recycle Challenge",
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -101,6 +117,7 @@ class _ChallengePageState extends State<ChallengePage> {
 
             Card(
               elevation: 3,
+              color: const Color(0xFFFFFEF7),
               child: Padding(
                 padding: const EdgeInsets.all(16),
 

@@ -5,11 +5,11 @@ import 'package:geolocator/geolocator.dart';
 class WardService {
   static List<dynamic> _features = [];
 
-  /// Load all ward GeoJSON files
+
   static Future<void> initialize() async {
     if (_features.isNotEmpty) return;
 
-    // List all GeoJSON files manually
+    
     final files = [
       'assets/data/A.geojson',
       'assets/data/B.geojson',
@@ -46,7 +46,7 @@ class WardService {
     }
   }
 
-  /// Returns the ward name from a lat/lng
+
   Future<String?> getWardFromLocation(Position position) async {
     await initialize();
 
@@ -69,7 +69,7 @@ class WardService {
     return null;
   }
 
-  /// Check if point is inside MultiPolygon
+
   bool _isPointInMultiPolygon(
       double lng, double lat, List<dynamic> coordinates) {
     for (var polygon in coordinates) {
@@ -80,7 +80,7 @@ class WardService {
     return false;
   }
 
-  /// Ray-casting algorithm for point-in-polygon
+ 
   bool _isPointInPolygon(double lng, double lat, List<dynamic> polygon) {
     int intersections = 0;
 

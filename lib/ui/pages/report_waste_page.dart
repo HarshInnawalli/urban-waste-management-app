@@ -1,23 +1,17 @@
 import 'package:flutter/material.dart';
 
-class ReportWastePage extends StatelessWidget {
+import '../complaint_screen.dart';
+
+class ReportWastePage extends StatefulWidget {
   const ReportWastePage({super.key});
 
   @override
+  State<ReportWastePage> createState() => _ReportWastePageState();
+}
+
+class _ReportWastePageState extends State<ReportWastePage> {
+  @override
   Widget build(BuildContext context) {
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Report Garbage"),
-      ),
-
-      body: const Center(
-        child: Text(
-          "Report Waste Page\n(Complaint AI coming here)",
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 18),
-        ),
-      ),
-    );
+    return const ComplaintScreen();
   }
 }
