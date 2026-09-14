@@ -11,4 +11,12 @@ class CameraService {
     }
     return null;
   }
+
+  Future<File?> pickFromGallery() async {
+    final image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      return File(image.path);
+    }
+    return null;
+  }
 }

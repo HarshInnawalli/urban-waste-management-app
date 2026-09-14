@@ -1,42 +1,56 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:image/image.dart' as img;
-import 'package:http/http.dart' as http;
+
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
+import 'package:image/image.dart' as img;
+
+class GeminiGenerationResult {
+  const GeminiGenerationResult({
+    required this.email,
+    required this.usage,
+    required this.remaining,
+  });
+
+  final String email;
+  final int usage;
+  final int remaining;
+}
 
 class GeminiService {
-  static const workerUrl =
+  static const String workerUrl =
       "https://complaint-worker.innawalliharsh.workers.dev/generate-complaint";
   static const int maxPayloadBytes = 20000;
 
   static Future<File> compressImage(File imageFile) async {
     final bytes = await imageFile.readAsBytes();
-    var image = img.decodeImage(bytes);
-    if (image == null) return imageFile;
+    final image = img.decodeImage(bytes);
+    if (image == null) {
+      return imageFile;
+    }
 
-    int width = 200;
-    int quality = 30;
+    const width = 200;
+    var quality = 30;
 
-    img.Image resized = img.copyResize(image, width: width);
-    List<int> jpgBytes = img.encodeJpg(resized, quality: quality);
+    final resized = img.copyResize(image, width: width);
+    var jpgBytes = img.encodeJpg(resized, quality: quality);
 
-    while (base64Encode(jpgBytes).length > maxPayloadBytes &&
-        quality > 5) {
+    while (base64Encode(jpgBytes).length > maxPayloadBytes && quality > 5) {
       quality -= 5;
       jpgBytes = img.encodeJpg(resized, quality: quality);
     }
 
-    final tempFile =
-        File('${imageFile.path}_compressed.jpg');
+    final tempFile = File('${imageFile.path}_compressed.jpg');
     await tempFile.writeAsBytes(jpgBytes);
     return tempFile;
   }
 
-  // ✅ LOCATION IS NOW PASSED FROM UI
-  static Future<String> generateEmailFromImage(
+  static Future<GeminiGenerationResult> generateEmailFromImage(
     File imageFile, {
     required Position position,
+    required String ward,
     String? prompt,
+    int? userId,
   }) async {
     final compressedFile = await compressImage(imageFile);
     final bytes = await compressedFile.readAsBytes();
@@ -44,10 +58,12 @@ class GeminiService {
 
     final payload = {
       "image": base64Image,
-      "prompt": prompt ??
-          "Write a polite garbage complaint email based on this image.",
+      "prompt":
+          prompt ?? "Write a polite garbage complaint email based on this image.",
       "latitude": position.latitude,
       "longitude": position.longitude,
+      "ward": ward,
+      if (userId != null) "user_id": userId,
     };
 
     final response = await http.post(
@@ -56,12 +72,19 @@ class GeminiService {
       body: jsonEncode(payload),
     );
 
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+
     if (response.statusCode != 200) {
-      throw Exception("Gemini worker failed: ${response.body}");
+      throw Exception(
+        data["error"]?.toString() ?? "Gemini worker failed: ${response.body}",
+      );
     }
 
-    final data = jsonDecode(response.body);
-    return data["email"] ?? "";
+    return GeminiGenerationResult(
+      email: data["email"]?.toString() ?? "",
+      usage: (data["todays_usage"] as num?)?.toInt() ?? 0,
+      remaining: (data["remaining"] as num?)?.toInt() ?? 0,
+    );
   }
 
   static Future<String> generateTemplateEmail({
