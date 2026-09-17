@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../services/camera_service.dart';
 import '../services/waste_service.dart';
+import '../services/waste_classification_service.dart';
 
 class WasteTrackingPage extends StatefulWidget {
   const WasteTrackingPage({super.key});
@@ -10,14 +13,19 @@ class WasteTrackingPage extends StatefulWidget {
 
 class _WasteTrackingPageState extends State<WasteTrackingPage> {
   final WasteService wasteService = WasteService();
+  final CameraService _cameraService = CameraService();
+  final WasteClassificationService _classificationService =
+      WasteClassificationService();
 
   final TextEditingController amountController = TextEditingController();
 
   String category = "plastic";
   bool recycled = false;
   bool loading = false;
+  bool classifying = false;
+  WasteClassificationResult? classificationResult;
 
-  final List<String> categories = ["plastic", "organic", "paper", "e-waste"];
+  final List<String> categories = WasteClassificationService.categories;
 
   @override
   void dispose() {
@@ -50,9 +58,123 @@ class _WasteTrackingPageState extends State<WasteTrackingPage> {
       ).showSnackBar(SnackBar(content: Text("Error: $e")));
     }
 
-    setState(() {
-      loading = false;
-    });
+    if (mounted) {
+      setState(() {
+        loading = false;
+      });
+    }
+  }
+
+  Future<void> _captureAndClassify() async {
+    setState(() => classifying = true);
+
+    try {
+      final image = await _cameraService.capturePhoto();
+      if (image == null) {
+        return;
+      }
+
+      final result = await _classificationService.classify(image);
+      if (!mounted) {
+        return;
+      }
+      setState(() => classificationResult = result);
+    } on PlatformException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      final denied = error.code.contains('denied') ||
+          error.message?.toLowerCase().contains('permission') == true;
+      _showMessage(
+        denied
+            ? 'Camera permission was denied. Enable it in device settings to classify waste.'
+            : 'Unable to open the camera. Please try again.',
+      );
+    } on StateError catch (error) {
+      if (mounted) {
+        _showMessage(error.message?.toString() ?? 'Unable to classify this image.');
+      }
+    } catch (_) {
+      if (mounted) {
+        _showMessage('Unable to classify this image. Please try again.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => classifying = false);
+      }
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _categoryLabel(String value) {
+    return value
+        .split('_')
+        .map((word) => '${word[0].toUpperCase()}${word.substring(1)}')
+        .join(' ');
+  }
+
+  Widget _classificationCard() {
+    final result = classificationResult;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F5E8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFB7DEB0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.auto_awesome, color: Color(0xFF4CAF50)),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Use ML Model for Classification',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: classifying ? null : _captureAndClassify,
+              icon: classifying
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.camera_alt_outlined),
+              label: Text(classifying ? 'Classifying image...' : 'Capture and classify'),
+            ),
+          ),
+          if (result != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Predicted category: ${_categoryLabel(result.category)}',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            Text('Confidence: ${(result.confidence * 100).toStringAsFixed(1)}%'),
+            const SizedBox(height: 10),
+            TextButton.icon(
+              onPressed: () => setState(() => category = result.category),
+              icon: const Icon(Icons.check),
+              label: Text('Use ${_categoryLabel(result.category)}'),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   @override
@@ -104,13 +226,19 @@ class _WasteTrackingPageState extends State<WasteTrackingPage> {
                         case "plastic":
                           icon = Icons.local_drink;
                           break;
-                        case "organic":
+                        case "organic_compost":
                           icon = Icons.grass;
                           break;
-                        case "paper":
+                        case "paper_cardboard":
                           icon = Icons.description;
                           break;
-                        case "e-waste":
+                        case "glass":
+                          icon = Icons.wine_bar_outlined;
+                          break;
+                        case "metal":
+                          icon = Icons.hardware;
+                          break;
+                        case "ewaste":
                           icon = Icons.devices;
                           break;
                         default:
@@ -122,7 +250,7 @@ class _WasteTrackingPageState extends State<WasteTrackingPage> {
                           children: [
                             Icon(icon, color: const Color(0xFF4CAF50)),
                             const SizedBox(width: 8),
-                            Text(c),
+                            Text(_categoryLabel(c)),
                           ],
                         ),
                       );
@@ -133,7 +261,7 @@ class _WasteTrackingPageState extends State<WasteTrackingPage> {
                       });
                     },
                     decoration: const InputDecoration(
-                      labelText: "Category",
+                      labelText: "Waste Category",
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -149,6 +277,10 @@ class _WasteTrackingPageState extends State<WasteTrackingPage> {
                       prefixIcon: Icon(Icons.scale, color: Color(0xFF4CAF50)),
                     ),
                   ),
+
+                  const SizedBox(height: 16),
+
+                  _classificationCard(),
 
                   const SizedBox(height: 16),
 
