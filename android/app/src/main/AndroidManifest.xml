@@ -24,7 +24,7 @@
     </queries>
 
     <application
-        android:label="gmail_gemini_component"
+        android:label="EcoTrack"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 
